@@ -254,7 +254,7 @@ export default function BillingDashboard() {
   },[rawData]);
 
   const maxMonthly = Math.max(...dash.MONTHLY.map(m=>m.net_cost),1);
-  const tabs = ["overview","monthly","daily","projects","services"];
+  const tabs = ["overview","monthly","daily","services"];
 
   // ── LOADING / ERROR ──
   if (loading) return (
@@ -577,58 +577,7 @@ export default function BillingDashboard() {
           </div>
         )}
 
-        {/* ════════════ PROJECTS ════════════ */}
-        {activeTab==="projects" && (
-          <div style={{display:"flex",flexDirection:"column",gap:20}}>
-            <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
-              <Card style={{flex:2,minWidth:320}}>
-                <SecTitle accent={C.brand}>Project Billing by Month</SecTitle>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={dash.PROJECTS} margin={{top:4,right:8,left:0,bottom:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false}/>
-                    <XAxis dataKey="project" tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
-                    <YAxis tickFormatter={fmtShort} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
-                    <Tooltip content={<Tip/>}/>
-                    <Legend wrapperStyle={{color:C.textMuted,fontSize:12,paddingTop:8}}/>
-                    {dash.MONTHS.map((m,i)=>(
-                      <Bar key={m.key} dataKey={m.key} name={m.label}
-                        fill={i===0?C.brand:i===1?C.cyan:PIE_COLORS[i]} radius={[4,4,0,0]}/>
-                    ))}
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
 
-              <Card style={{flex:1,minWidth:240}}>
-                <SecTitle accent={C.cyan}>Project Share</SecTitle>
-                <ResponsiveContainer width="100%" height={280}>
-                  <PieChart>
-                    <Pie data={dash.PROJECTS} dataKey="total" nameKey="project"
-                      cx="50%" cy="45%" outerRadius={100} innerRadius={55} paddingAngle={4}>
-                      {dash.PROJECTS.map((_,i)=><Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
-                    </Pie>
-                    <Tooltip formatter={(v)=>fmt(v)}/>
-                    <Legend wrapperStyle={{color:C.textMuted,fontSize:11}} iconSize={9}/>
-                  </PieChart>
-                </ResponsiveContainer>
-              </Card>
-            </div>
-
-            <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
-              {dash.PROJECTS.map((p,i)=>(
-                <Card key={p.project} style={{flex:1,minWidth:180,borderTop:`3px solid ${PIE_COLORS[i%PIE_COLORS.length]}`}}>
-                  <p style={{color:PIE_COLORS[i%PIE_COLORS.length],fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"0 0 6px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",letterSpacing:"0.08em"}}>{p.project}</p>
-                  <p style={{color:C.textPrimary,fontSize:22,fontWeight:800,fontFamily:"monospace",margin:"0 0 10px",lineHeight:1}}>{fmtShort(p.total)}</p>
-                  <div style={{fontSize:12,color:C.textMuted,display:"flex",flexDirection:"column",gap:3}}>
-                    {dash.MONTHS.map(m=>(
-                      <span key={m.key}>{m.label.split(" ")[0]}: {p[m.key]>0?fmtShort(p[m.key]):"—"}</span>
-                    ))}
-                    
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* ════════════ SERVICES ════════════ */}
         {activeTab==="services" && (
