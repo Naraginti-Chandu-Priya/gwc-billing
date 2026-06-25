@@ -464,7 +464,6 @@ export default function BillingDashboard() {
                   <Tooltip content={<Tip/>}/>
                   <Legend wrapperStyle={{color:C.textMuted,fontSize:13,paddingTop:8}}/>
                   <Bar dataKey="net_cost"   name="Net Cost (INR)"   fill={C.brand} radius={[8,8,0,0]}/>
-                  <Bar dataKey="gross_cost" name="Gross Cost (INR)" fill={C.cyan}  radius={[8,8,0,0]}/>
                 </BarChart>
               </ResponsiveContainer>
             </Card>
