@@ -1,12 +1,22 @@
 {
-  "name": "app",
-  "version": "0.0.1",
-  "size": {
-    "width": 3,
-    "height": 3
-  },
-  "mapping": [],
-  "collections": [],
-  "workflowMapping": [],
-  "packagesMapping": []
+   "name": "app",
+   "version": "0.0.1",
+   "size": {
+      "width": 3,
+      "height": 3
+   },
+   "workflowMapping": [],
+   "packagesMapping": [],
+   "id": "36822130-3254-4d59-9622-3e136a58b00e",
+   "proxyId": "5e8b96ca-e71e-48b0-847b-fa272dd9f8da",
+   "fileName": "manifest.json",
+   "datasetsMapping": [
+      {
+         "dataSetId": "03fb2948-cb9d-49c0-b2c0-69151e1de9c6",
+         "alias": "billing",
+         "fields": [],
+         "dql": null
+      }
+   ],
+   "collectionsMapping": []
 }

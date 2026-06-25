@@ -1,7 +1,7 @@
-import DefaultPage from "./pages/index";
+import BillingDashboard from "./pages/index";
 
 function App() {
-  return <DefaultPage />;
+  return <BillingDashboard />;
 }
 
 export default App;

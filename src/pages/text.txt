@@ -1,0 +1,85 @@
+
+              <Card style={{flex:1,minWidth:320}}>
+                <SecTitle accent={C.brand}>Service MoM Comparison</SecTitle>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={dash.SERVICES.slice(0,8).filter(s=>s.prevCost>0||s.currCost>0)} margin={{top:10,right:0,left:0,bottom:0}}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false}/>
+                    <XAxis dataKey="service" tick={{fill:C.textMuted,fontSize:10}} axisLine={false} tickLine={false}/>
+                    <YAxis tickFormatter={fmtShort} tick={{fill:C.textMuted,fontSize:10}} axisLine={false} tickLine={false}/>
+                    <Tooltip content={<Tip/>}/>
+                    <Legend wrapperStyle={{fontSize:11,paddingTop:10}} iconType="circle"/>
+                    <Bar dataKey="prevCost" name={dash.MONTHS.length>1?dash.MONTHS[dash.MONTHS.length-2].label:"Previous Month"} fill={C.brandMid} radius={[4,4,0,0]}/>
+                    <Bar dataKey="currCost" name={dash.MONTHS.length>0?dash.MONTHS[dash.MONTHS.length-1].label:"Current Month"} fill={C.brand} radius={[4,4,0,0]}/>
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+              ================================================
+              <Card style={{flex:1,minWidth:320}}>
+                <SecTitle accent={C.c4}>Top MoM Movers (Change %)</SecTitle>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={[...dash.SERVICES.filter(s=>s.mom!==null)].sort((a,b)=>Math.abs(b.mom)-Math.abs(a.mom)).slice(0,6)} layout="vertical" margin={{top:0,right:24,left:0,bottom:0}}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={C.border} horizontal={false}/>
+                    <XAxis type="number" tickFormatter={(v)=>`${v}%`} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
+                    <YAxis dataKey="service" type="category" width={140} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
+                    <Tooltip formatter={(v)=>`${v}%`}/>
+                    <Bar dataKey="mom" name="MoM Change %" radius={[0,4,4,0]}>
+                      {[...dash.SERVICES.filter(s=>s.mom!==null)].sort((a,b)=>Math.abs(b.mom)-Math.abs(a.mom)).slice(0,6).map((s,i)=>(
+                        <Cell key={i} fill={Number(s.mom) > 0 ? C.c5 : C.c3}/>
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+              =======================================
+               <Card>
+              <SecTitle accent={C.cyan}>Service Cost Breakdown</SecTitle>
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+                  <thead>
+                    <tr style={{background:C.bgSection}}>
+                      <th style={{color:C.textMuted,textAlign:"left",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap"}}>#</th>
+                      <th style={{color:C.textMuted,textAlign:"left",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap"}}>Service</th>
+                      <th style={{color:C.textMuted,textAlign:"right",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap"}}>{dash.MONTHS.length>1?dash.MONTHS[dash.MONTHS.length-2].label:"Prev Month"}</th>
+                      <th style={{color:C.textMuted,textAlign:"right",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap"}}>{dash.MONTHS.length>0?dash.MONTHS[dash.MONTHS.length-1].label:"Curr Month"}</th>
+                      <th style={{color:C.textMuted,textAlign:"right",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap"}}>MoM Change</th>
+                      <th style={{color:C.textMuted,textAlign:"right",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap"}}>Total Net Cost</th>
+                      <th style={{color:C.textMuted,textAlign:"right",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap"}}>Share</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dash.SERVICES.filter(s=>s.cost>0).map((s,i)=>(
+                      <tr key={s.service} style={{background:i%2?C.bgSection:C.bgCard}}>
+                        <td style={{padding:"10px 14px",color:C.textLight,fontSize:11,borderBottom:`1px solid ${C.border}`}}>{i+1}</td>
+                        <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`}}>
+                          <span style={{color:C.textPrimary,fontWeight:600}}>{s.service}</span>
+                        </td>
+                        <td style={{padding:"10px 14px",color:C.textPrimary,fontFamily:"monospace",fontWeight:500,textAlign:"right",borderBottom:`1px solid ${C.border}`}}>
+                          {s.prevCost>0?fmt(s.prevCost):"—"}
+                        </td>
+                        <td style={{padding:"10px 14px",color:C.textPrimary,fontFamily:"monospace",fontWeight:600,textAlign:"right",borderBottom:`1px solid ${C.border}`}}>
+                          {s.currCost>0?fmt(s.currCost):"—"}
+                        </td>
+                        <td style={{padding:"10px 14px",textAlign:"right",borderBottom:`1px solid ${C.border}`}}>
+                          {s.mom ? (
+                            <span style={{
+                              background: Number(s.mom) > 0 ? `${C.c5}20` : `${C.c3}20`,
+                              color: Number(s.mom) > 0 ? C.c5 : C.c3,
+                              padding:"2px 8px", borderRadius:6, fontSize:11, fontWeight:700, fontFamily:"monospace"
+                            }}>
+                              {Number(s.mom) > 0 ? "▲ " : "▼ "}{Math.abs(s.mom)}%
+                            </span>
+                          ) : "—"}
+                        </td>
+                        <td style={{padding:"10px 14px",color:C.textPrimary,fontFamily:"monospace",fontWeight:700,whiteSpace:"nowrap",textAlign:"right",borderBottom:`1px solid ${C.border}`}}>{fmt(s.cost)}</td>
+                        <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`,textAlign:"right"}}>
+                          <span style={{
+                            background:C.brandLight,color:C.brand,
+                            padding:"2px 8px",borderRadius:6,fontSize:11,fontWeight:700,fontFamily:"monospace"
+                          }}>{s.pct}%</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>

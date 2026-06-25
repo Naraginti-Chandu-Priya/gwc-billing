@@ -1,340 +1,701 @@
-import { useState } from "react";
-import { Button } from "../components/ui/button";
-import { FiBook, FiPackage, FiGithub, FiExternalLink } from "react-icons/fi";
-import "./index.css";
+import { useState, useEffect, useMemo } from "react";
+import domo from "ryuu.js";
+import {
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  AreaChart, Area
+} from "recharts";
 
-// Vite Logo SVG
-const ViteLogo = () => (
-  <svg
-    className="logo-icon logo-vite"
-    viewBox="0 0 410 404"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M399.641 59.5246L215.643 388.545C211.844 395.338 202.084 395.378 198.228 388.618L10.5817 59.5563C6.38087 52.1896 12.6802 43.2665 21.0281 44.7586L205.223 77.6824C206.398 77.8924 207.601 77.8904 208.776 77.6763L389.119 44.8058C397.439 43.2894 403.768 52.1434 399.641 59.5246Z"
-      fill="url(#paint0_linear)"
-    />
-    <path
-      d="M292.965 1.5744L156.801 28.2552C154.563 28.6937 152.906 30.5903 152.771 32.8664L144.395 174.33C144.198 177.662 147.258 180.248 150.51 179.498L188.42 170.749C191.967 169.931 195.172 173.055 194.443 176.622L183.18 231.775C182.422 235.487 185.907 238.661 189.532 237.56L212.947 230.446C216.577 229.344 220.065 232.527 219.297 236.242L201.398 322.875C200.278 328.294 207.486 331.249 210.492 326.603L212.5 323.5L323.454 102.072C325.312 98.3645 322.108 94.137 318.036 94.9228L279.014 102.454C275.347 103.161 272.227 99.746 273.262 96.1583L298.731 7.86689C299.767 4.27314 296.636 0.855181 292.965 1.5744Z"
-      fill="url(#paint1_linear)"
-    />
-    <defs>
-      <linearGradient
-        id="paint0_linear"
-        x1="6.00017"
-        y1="32.9999"
-        x2="235"
-        y2="344"
-        gradientUnits="userSpaceOnUse"
-      >
-        <stop stopColor="#41D1FF" />
-        <stop offset="1" stopColor="#BD34FE" />
-      </linearGradient>
-      <linearGradient
-        id="paint1_linear"
-        x1="194.651"
-        y1="8.81818"
-        x2="236.076"
-        y2="292.989"
-        gradientUnits="userSpaceOnUse"
-      >
-        <stop stopColor="#FFBD4F" />
-        <stop offset="1" stopColor="#FF980E" />
-      </linearGradient>
-    </defs>
-  </svg>
-);
+// ── PALETTE (Light elegant theme) ─────────────────────────────────────────────
+const C = {
+  // Backgrounds — light, airy
+  bgPage:      "#F0F4FF",       // very light blue-tinted white
+  bgCard:      "#FFFFFF",
+  bgSection:   "#F8FAFF",
+  bgHeader:    "#FFFFFF",
 
-// React Logo SVG
-const ReactLogo = () => (
-  <svg
-    className="logo-icon logo-react"
-    viewBox="-11.5 -10.23174 23 20.46348"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <circle cx="0" cy="0" r="2.05" fill="#61dafb" />
-    <g stroke="#61dafb" strokeWidth="1" fill="none">
-      <ellipse rx="11" ry="4.2" />
-      <ellipse rx="11" ry="4.2" transform="rotate(60)" />
-      <ellipse rx="11" ry="4.2" transform="rotate(120)" />
-    </g>
-  </svg>
-);
+  // Brand
+  brand:       "#2563EB",
+  brandLight:  "#EBF1FF",
+  brandMid:    "#BFCFFF",
+  cyan:        "#06B6D4",
+  cyanLight:   "#E0F8FC",
+  dark:        "#050816",
+  darkSection: "#111827",
 
-// Domo Logo SVG
-const DomoLogo = () => (
-  <svg
-    className="logo-icon logo-domo"
-    viewBox="0 0 100 100"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <rect width="100" height="100" rx="16" fill="url(#domoGradient)" />
-    <text
-      x="50"
-      y="65"
-      textAnchor="middle"
-      fill="white"
-      fontSize="36"
-      fontWeight="bold"
-      fontFamily="Arial, sans-serif"
-    >
-      DOMO
-    </text>
-    {/* <circle cx="72" cy="35" r="8" fill="white" opacity="0.8" /> */}
-    <defs>
-      <linearGradient
-        id="domoGradient"
-        x1="0"
-        y1="0"
-        x2="100"
-        y2="100"
-        gradientUnits="userSpaceOnUse"
-      >
-        <stop stopColor="#00B5E2" />
-        <stop offset="1" stopColor="#0072BC" />
-      </linearGradient>
-    </defs>
-  </svg>
-);
+  // Text
+  textPrimary: "#050816",
+  textSecond:  "#1E293B",
+  textMuted:   "#64748B",
+  textLight:   "#94A3B8",
 
-// Tailwind Logo SVG
-const TailwindLogo = () => (
-  <svg
-    className="logo-icon logo-tailwind"
-    viewBox="0 0 54 33"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <g clipPath="url(#tailwindClip)">
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M27 0C19.8 0 15.3 3.6 13.5 10.8C16.2 7.2 19.35 5.85 22.95 6.75C25.004 7.263 26.472 8.754 28.097 10.403C30.744 13.09 33.808 16.2 40.5 16.2C47.7 16.2 52.2 12.6 54 5.4C51.3 9 48.15 10.35 44.55 9.45C42.496 8.937 41.028 7.446 39.403 5.797C36.756 3.11 33.692 0 27 0ZM13.5 16.2C6.3 16.2 1.8 19.8 0 27C2.7 23.4 5.85 22.05 9.45 22.95C11.504 23.464 12.972 24.954 14.597 26.603C17.244 29.29 20.308 32.4 27 32.4C34.2 32.4 38.7 28.8 40.5 21.6C37.8 25.2 34.65 26.55 31.05 25.65C28.996 25.137 27.528 23.646 25.903 21.997C23.256 19.31 20.192 16.2 13.5 16.2Z"
-        fill="url(#tailwindGradient)"
-      />
-    </g>
-    <defs>
-      <linearGradient
-        id="tailwindGradient"
-        x1="0"
-        y1="16.2"
-        x2="54"
-        y2="16.2"
-        gradientUnits="userSpaceOnUse"
-      >
-        <stop stopColor="#06B6D4" />
-        <stop offset="1" stopColor="#22D3EE" />
-      </linearGradient>
-      <clipPath id="tailwindClip">
-        <rect width="54" height="33" fill="white" />
-      </clipPath>
-    </defs>
-  </svg>
-);
+  // Borders
+  border:      "#E2E8F0",
+  borderBlue:  "#C7D9FF",
 
-// Shadcn Logo SVG
-const ShadcnLogo = () => (
-  <svg
-    className="logo-icon logo-shadcn"
-    viewBox="0 0 256 256"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <rect width="256" height="256" rx="60" fill="currentColor" />
-    <line
-      x1="208"
-      y1="128"
-      x2="128"
-      y2="208"
-      stroke="url(#shadcnGradient)"
-      strokeWidth="24"
-      strokeLinecap="round"
-    />
-    <line
-      x1="192"
-      y1="40"
-      x2="40"
-      y2="192"
-      stroke="url(#shadcnGradient)"
-      strokeWidth="24"
-      strokeLinecap="round"
-    />
-    <defs>
-      <linearGradient
-        id="shadcnGradient"
-        x1="40"
-        y1="40"
-        x2="208"
-        y2="208"
-        gradientUnits="userSpaceOnUse"
-      >
-        <stop stopColor="#fff" />
-        <stop offset="1" stopColor="#a1a1aa" />
-      </linearGradient>
-    </defs>
-  </svg>
-);
+  // Chart palette
+  c1: "#2563EB",
+  c2: "#06B6D4",
+  c3: "#10B981",
+  c4: "#F59E0B",
+  c5: "#EF4444",
+  c6: "#8B5CF6",
+  c7: "#EC4899",
+  c8: "#14B8A6",
+  c9: "#F97316",
+};
 
-const DefaultPage = () => {
-  const [count, setCount] = useState(0);
+const PIE_COLORS = [C.c1,C.c2,C.c3,C.c4,C.c5,C.c6,C.c7,C.c8,C.c9];
 
-  const docLinks = [
-    {
-      title: "DOMO APIs",
-      url: "https://developer.domo.com/portal/8ba9aedad3679-ap-is",
-      description: "Explore the API documentation",
-      Icon: FiBook,
-    },
-    {
-      title: "Domo Starter Kit",
-      url: "https://developer.domo.com/portal/u8w475o2245yp-starter-kits",
-      description: "Get started quickly",
-      Icon: FiPackage,
-    },
-    {
-      title: "GitHub Repository",
-      url: "https://github.com/Ajay-Balu/create-dovite",
-      description: "View source code",
-      Icon: FiGithub,
-    },
-  ];
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+const fmt = (v) => `₹${Number(v).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+const fmtShort = (v) => {
+  const n = Number(v) || 0;
+  if (n >= 100000) return `₹${(n/100000).toFixed(2)}L`;
+  if (n >= 1000)   return `₹${(n/1000).toFixed(1)}K`;
+  return `₹${n.toFixed(0)}`;
+};
 
+const Tip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
   return (
-    <div className="landing-page h-screen w-screen flex flex-col overflow-hidden">
-      {/* Main Content Area */}
-      <div className="flex-1 flex items-center justify-center gap-16 px-8 py-8 max-w-[1400px] mx-auto w-full max-lg:flex-col max-lg:gap-8 max-lg:overflow-y-auto">
-        {/* Left Side - Hero Section */}
-        <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
-          {/* Logo Container */}
-          <div className="flex justify-center items-center gap-2 flex-wrap mb-2">
-            <a
-              href="https://vitejs.dev"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex transition-transform duration-300 hover:scale-115"
-            >
-              <ViteLogo />
-            </a>
-            <span className="text-2xl font-light text-zinc-500/50 mx-1">+</span>
-            <a
-              href="https://react.dev"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex transition-transform duration-300 hover:scale-115"
-            >
-              <ReactLogo />
-            </a>
-            <span className="text-2xl font-light text-zinc-500/50 mx-1">+</span>
-            <a
-              href="https://www.domo.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex transition-transform duration-300 hover:scale-115"
-            >
-              <DomoLogo />
-            </a>
-            <span className="text-2xl font-light text-zinc-500/50 mx-1">+</span>
-            <a
-              href="https://tailwindcss.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex transition-transform duration-300 hover:scale-115"
-            >
-              <TailwindLogo />
-            </a>
-            <span className="text-2xl font-light text-zinc-500/50 mx-1">+</span>
-            <a
-              href="https://ui.shadcn.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex transition-transform duration-300 hover:scale-115"
-            >
-              <ShadcnLogo />
-            </a>
-          </div>
-
-          {/* Title */}
-          <h1 className="text-5xl font-extrabold tracking-tight m-0 leading-tight max-md:text-4xl max-sm:text-3xl">
-            <span className="gradient-text">Dovite</span>
-          </h1>
-          <p className="text-base text-zinc-400 m-0 font-medium">
-            Vite + React + DOMO + Tailwind + Shadcn/UI
-          </p>
-          <p className="text-sm text-zinc-500 m-0 max-w-[400px]">
-            Build beautiful DOMO apps with modern web technologies
-          </p>
-
-          {/* Interactive Demo Section */}
-          <div className="mt-6">
-            <div className="px-8 py-6 bg-white/3 border border-white/8 rounded-2xl backdrop-blur-lg">
-              <Button
-                onClick={() => setCount((count) => count + 1)}
-                className="text-sm px-5 py-2.5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
-              >
-                Count is {count}
-              </Button>
-              <p className="mt-4 text-zinc-500 text-xs">
-                Edit{" "}
-                <code className="bg-zinc-500/15 px-1.5 py-0.5 rounded text-zinc-400 font-mono text-[0.8em]">
-                  src/pages/index.jsx
-                </code>{" "}
-                and save to test HMR
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side - Documentation Links */}
-        <div className="w-80 flex flex-col gap-4 p-6 bg-white/2 border border-white/6 rounded-2xl backdrop-blur-lg max-lg:w-full max-lg:max-w-[400px]">
-          <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest m-0 pb-3 border-b border-white/6">
-            Resources
-          </h2>
-          <div className="flex flex-col gap-2">
-            {docLinks.map((link, index) => (
-              <a
-                key={index}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-center gap-3 px-4 py-3.5 bg-white/2 border border-white/4 rounded-xl no-underline text-inherit transition-all duration-250 hover:bg-white/6 hover:border-cyan-500/30 hover:translate-x-1"
-              >
-                <link.Icon className="text-xl text-cyan-500 shrink-0" />
-                <div className="flex-1 flex flex-col gap-0.5 min-w-0">
-                  <span className="text-sm font-semibold text-zinc-100">
-                    {link.title}
-                  </span>
-                  <span className="text-xs text-zinc-500">
-                    {link.description}
-                  </span>
-                </div>
-                <FiExternalLink className="text-sm text-zinc-600 shrink-0 transition-all duration-250 group-hover:text-cyan-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </a>
-            ))}
-          </div>
-          <p className="text-xs text-zinc-600 text-center m-0 pt-2">
-            Click on the logos to learn more
-          </p>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="px-8 py-4 text-center border-t border-white/6 bg-black/20">
-        <p className="m-0 text-zinc-600 text-xs">
-          Built with <span className="text-red-500">❤</span> using{" "}
-          <a
-            href="https://github.com/Ajay-Balu/create-dovite"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-cyan-500 no-underline font-medium transition-colors duration-300 hover:text-purple-500"
-          >
-            create-dovite
-          </a>
+    <div style={{
+      background:C.bgCard,border:`1px solid ${C.borderBlue}`,borderRadius:10,
+      padding:"10px 14px",fontSize:13,boxShadow:"0 8px 32px rgba(37,99,235,0.12)",
+    }}>
+      <p style={{color:C.textMuted,marginBottom:4,fontWeight:600,margin:"0 0 6px",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em"}}>{label}</p>
+      {payload.map((p,i)=>(
+        <p key={i} style={{color:p.color||C.textPrimary,margin:"3px 0",fontFamily:"monospace",fontWeight:700}}>
+          {p.name}: {fmt(p.value)}
         </p>
-      </footer>
+      ))}
     </div>
   );
 };
 
-export default DefaultPage;
+// ── BASE COMPONENTS ───────────────────────────────────────────────────────────
+const KPI = ({label,value,sub,accent,icon}) => (
+  <div style={{
+    background:C.bgCard,
+    border:`1px solid ${C.border}`,
+    borderRadius:16,
+    padding:"20px 22px",
+    flex:1,minWidth:170,
+    borderTop:`3px solid ${accent}`,
+    position:"relative",overflow:"hidden",
+    boxShadow:"0 1px 8px rgba(37,99,235,0.06)",
+    transition:"box-shadow 0.2s",
+  }}>
+    <div style={{
+      position:"absolute",top:14,right:16,
+      width:38,height:38,borderRadius:10,
+      background:`linear-gradient(135deg,${accent}18,${accent}08)`,
+      display:"flex",alignItems:"center",justifyContent:"center",
+      fontSize:18,
+    }}>{icon}</div>
+    <p style={{color:C.textMuted,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px"}}>{label}</p>
+    <p style={{color:C.textPrimary,fontSize:26,fontWeight:800,margin:"0 0 4px",fontFamily:"'Inter',monospace",lineHeight:1}}>{value}</p>
+    {sub && <p style={{color:C.textLight,fontSize:11,margin:0}}>{sub}</p>}
+  </div>
+);
+
+const Card = ({children,style={}}) => (
+  <div style={{
+    background:C.bgCard,
+    border:`1px solid ${C.border}`,
+    borderRadius:16,padding:24,
+    boxShadow:"0 1px 6px rgba(37,99,235,0.05)",
+    ...style,
+  }}>
+    {children}
+  </div>
+);
+
+const SecTitle = ({children,accent=C.brand}) => (
+  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18}}>
+    <div style={{width:3,height:18,borderRadius:2,background:accent}}/>
+    <h2 style={{color:C.textPrimary,fontSize:13,fontWeight:700,margin:0,textTransform:"uppercase",letterSpacing:"0.09em"}}>{children}</h2>
+  </div>
+);
+
+const TabBtn = ({label,active,onClick}) => (
+  <button onClick={onClick} style={{
+    background: active ? `linear-gradient(135deg,${C.brand},${C.cyan})` : C.bgCard,
+    border: `1.5px solid ${active ? C.brand : C.border}`,
+    color: active ? "#fff" : C.textMuted,
+    borderRadius:10,padding:"8px 20px",cursor:"pointer",
+    fontSize:12,fontWeight:600,textTransform:"capitalize",
+    transition:"all 0.18s",letterSpacing:"0.04em",
+    boxShadow: active ? "0 4px 16px rgba(37,99,235,0.25)" : "none",
+  }}>{label}</button>
+);
+
+// ── MAIN ──────────────────────────────────────────────────────────────────────
+export default function BillingDashboard() {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [rawData, setRawData]     = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const aliases = ["billing","GWC-POC_Billing","dataAlias","data"];
+      for (const alias of aliases) {
+        try {
+          const d = await domo.get(`/data/v1/${alias}?limit=50000`);
+          if (d && d.length) { setRawData(d); setLoading(false); return; }
+        } catch(_) {}
+      }
+      setError("Could not load data. Check manifest.json alias.");
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  const dash = useMemo(() => {
+    const empty = {
+      MONTHLY:[],DAILY:[],PROJECTS:[],SERVICES:[],REGIONS:[],MONTHS:[],
+      totalNet:0,totalGross:0,nProjects:0,nServices:0,
+      topProject:"-",topService:"-",dateRange:"-",
+      peakDay:{day:"-",date:"-",cost:0},
+      lowDay:{day:"-",cost:0},
+      avgDaily:0,highDays:0,momGrowth:null,
+    };
+    if (!rawData?.length) return empty;
+
+    const s = rawData[0];
+    const dateF  = ["usage_day","Date","date","usage_date"].find(f=>s[f]!==undefined) || "usage_day";
+    const projF  = ["project_id","Project","project","project_name"].find(f=>s[f]!==undefined) || "project_id";
+    const svcF   = ["service","Service","service_description"].find(f=>s[f]!==undefined) || "service";
+    const regF   = ["region","Region","location_region"].find(f=>s[f]!==undefined) || "region";
+    const netF   = ["net_cost","Net Cost","cost","Cost"].find(f=>s[f]!==undefined) || "net_cost";
+    const grossF = ["gross_cost","Gross Cost"].find(f=>s[f]!==undefined) || "gross_cost";
+
+    let tNet=0, tGross=0;
+    const mMap={}, dMap={}, pMap={}, sMap={}, rMap={};
+
+    rawData.forEach(row => {
+      const proj  = row[projF]  || "Unknown";
+      const svc   = row[svcF]   || "Unknown";
+      const reg   = row[regF]   || "Unknown";
+      const net   = Number(row[netF])   || 0;
+      const gross = Number(row[grossF]) || net;
+      const dRaw  = row[dateF];
+      if (!dRaw) return;
+
+      const d = dRaw instanceof Date ? dRaw : new Date(dRaw);
+      if (isNaN(d.getTime())) return;
+
+      tNet   += net;
+      tGross += gross;
+
+      const yr    = d.getFullYear();
+      const mo    = d.getMonth()+1;
+      const mKey  = `${yr}-${String(mo).padStart(2,"0")}`;
+      const mLabel= d.toLocaleString("en-US",{month:"short",year:"numeric"});
+      const dKey  = `${yr}-${String(mo).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+      const dLabel= d.toLocaleString("en-US",{month:"short",day:"2-digit"});
+
+      if (!mMap[mKey]) mMap[mKey]={label:mLabel,month:mKey,net_cost:0,gross_cost:0};
+      mMap[mKey].net_cost  += net;
+      mMap[mKey].gross_cost += gross;
+
+      if (!dMap[dKey]) dMap[dKey]={day:dLabel,date:dKey,cost:0,_d:d};
+      dMap[dKey].cost += net;
+
+      if (!pMap[proj]) pMap[proj]={project:proj,total:0};
+      pMap[proj].total += net;
+      pMap[proj][mKey]  = (pMap[proj][mKey]||0)+net;
+
+      if (!sMap[svc]) sMap[svc]={service:svc,cost:0};
+      sMap[svc].cost += net;
+
+      if (!rMap[reg]) rMap[reg]={region:reg,cost:0};
+      rMap[reg].cost += net;
+    });
+
+    const MONTHLY  = Object.values(mMap).sort((a,b)=>a.month.localeCompare(b.month));
+    const MONTHS   = MONTHLY.map(m=>({key:m.month,label:m.label}));
+    const DAILY    = Object.values(dMap).sort((a,b)=>a._d-b._d);
+    const PROJECTS = Object.values(pMap).sort((a,b)=>b.total-a.total);
+    const SERVICES = Object.values(sMap)
+      .sort((a,b)=>b.cost-a.cost)
+      .map(s=>({...s,pct:tNet?(s.cost/tNet*100).toFixed(1):0}));
+    const REGIONS  = Object.values(rMap).sort((a,b)=>b.cost-a.cost);
+
+    const peakDay  = DAILY.reduce((mx,d)=>d.cost>mx.cost?d:mx,DAILY[0]||{day:"-",date:"-",cost:0});
+    const lowDay   = DAILY.reduce((mn,d)=>d.cost<mn.cost?d:mn,DAILY[0]||{day:"-",cost:0});
+    const avgDaily = DAILY.length?(tNet/DAILY.length):0;
+    const highDays = DAILY.filter(d=>d.cost>3000).length;
+
+    const dateRange = MONTHLY.length===0?"-"
+      : MONTHLY.length===1?MONTHLY[0].label
+      : `${MONTHLY[0].label.split(" ")[0]}–${MONTHLY[MONTHLY.length-1].label}`;
+
+    let momGrowth = null;
+    if (MONTHLY.length>=2) {
+      const prev=MONTHLY[MONTHLY.length-2], curr=MONTHLY[MONTHLY.length-1];
+      if (prev.net_cost) momGrowth={pct:((curr.net_cost-prev.net_cost)/prev.net_cost*100),from:prev.label,to:curr.label};
+    }
+
+    return {
+      MONTHLY,DAILY,PROJECTS,SERVICES,REGIONS,MONTHS,
+      totalNet:tNet,totalGross:tGross,
+      nProjects:Object.keys(pMap).length,
+      nServices:Object.keys(sMap).length,
+      topProject:PROJECTS[0]?.project||"-",
+      topService:SERVICES[0]?.service||"-",
+      dateRange,peakDay,lowDay,avgDaily,highDays,momGrowth,
+    };
+  },[rawData]);
+
+  const maxMonthly = Math.max(...dash.MONTHLY.map(m=>m.net_cost),1);
+  const tabs = ["overview","monthly","daily","projects","services"];
+
+  // ── LOADING / ERROR ──
+  if (loading) return (
+    <div style={{background:C.bgPage,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Inter','Segoe UI',system-ui,sans-serif",gap:16}}>
+      <div style={{
+        width:44,height:44,
+        border:`3px solid ${C.borderBlue}`,
+        borderTop:`3px solid ${C.brand}`,
+        borderRadius:"50%",
+        animation:"spin 0.9s linear infinite",
+      }}/>
+      <p style={{color:C.textMuted,fontSize:15,fontWeight:500}}>Loading billing data…</p>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+
+  if (error) return (
+    <div style={{background:C.bgPage,minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Inter','Segoe UI',system-ui,sans-serif"}}>
+      <div style={{background:C.bgCard,border:`1.5px solid #FCA5A5`,borderRadius:16,padding:40,maxWidth:440,textAlign:"center",boxShadow:"0 8px 32px rgba(239,68,68,0.1)"}}>
+        <p style={{fontSize:36,margin:"0 0 12px"}}>⚠️</p>
+        <p style={{color:C.textPrimary,fontSize:18,fontWeight:700,margin:"0 0 8px"}}>Data Load Failed</p>
+        <p style={{color:C.textMuted,fontSize:14,margin:0}}>{error}</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{background:C.bgPage,minHeight:"100vh",color:C.textPrimary,fontFamily:"'Inter','Segoe UI',system-ui,sans-serif"}}>
+
+      {/* ── HEADER ── */}
+      <div style={{
+        background:C.bgCard,
+        borderBottom:`1px solid ${C.border}`,
+        padding:"0 32px",
+        position:"sticky",top:0,zIndex:10,
+        boxShadow:"0 1px 12px rgba(37,99,235,0.07)",
+      }}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12,height:64}}>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            {/* Logo mark */}
+            <div style={{
+              width:36,height:36,borderRadius:10,
+              background:`linear-gradient(135deg,${C.brand},${C.cyan})`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:16,fontWeight:900,color:"#fff",
+              boxShadow:`0 4px 14px rgba(37,99,235,0.3)`,
+              flexShrink:0,
+            }}>G</div>
+            <div>
+              <h1 style={{margin:0,fontSize:16,fontWeight:800,color:C.textPrimary,letterSpacing:"-0.02em",lineHeight:1.2}}>GWC-POC Billing</h1>
+              <p style={{margin:0,fontSize:11,color:C.textMuted,letterSpacing:"0.02em"}}>Google Cloud Cost Intelligence · INR</p>
+            </div>
+          </div>
+
+          {/* Tab nav inside header */}
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {tabs.map(t=><TabBtn key={t} label={t} active={activeTab===t} onClick={()=>setActiveTab(t)}/>)}
+          </div>
+
+          <div style={{
+            background:C.bgSection,border:`1px solid ${C.border}`,
+            borderRadius:8,padding:"5px 14px",fontSize:11,color:C.textMuted,
+            display:"flex",alignItems:"center",gap:6,
+          }}>
+            <span style={{width:6,height:6,borderRadius:"50%",background:C.c3,display:"inline-block"}}/>
+            {dash.dateRange} · {rawData.length.toLocaleString()} records
+          </div>
+        </div>
+      </div>
+
+      <div style={{padding:"24px 32px"}}>
+
+        {/* ── KPI STRIP ── */}
+        <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:28}}>
+          <KPI label="Total Net Cost"    value={fmtShort(dash.totalNet)}     sub={dash.dateRange}            accent={C.brand}   icon="💰"/>
+          <KPI label="Gross Cost"        value={fmtShort(dash.totalGross)}   sub="Before credits"            accent={C.cyan}    icon="📊"/>
+          <KPI label="Active Projects"   value={dash.nProjects}              sub={`Top: ${dash.topProject}`} accent={C.c3}      icon="🗂️"/>
+          <KPI label="Services Used"     value={dash.nServices}              sub={`Top: ${dash.topService}`} accent={C.c6}      icon="⚙️"/>
+          <KPI label="Peak Day"          value={fmtShort(dash.peakDay.cost)} sub={dash.peakDay.date}         accent={C.c4}      icon="📈"/>
+        </div>
+
+        {/* ════════════ OVERVIEW ════════════ */}
+        {activeTab==="overview" && (
+          <div style={{display:"flex",flexDirection:"column",gap:20}}>
+            <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
+              {/* Monthly bar */}
+              <Card style={{flex:2,minWidth:300}}>
+                <SecTitle accent={C.brand}>Monthly Billing — Net vs Gross</SecTitle>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={dash.MONTHLY} barCategoryGap="35%" margin={{top:4,right:8,left:0,bottom:0}}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false}/>
+                    <XAxis dataKey="label" tick={{fill:C.textMuted,fontSize:12}} axisLine={false} tickLine={false}/>
+                    <YAxis tickFormatter={fmtShort} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
+                    <Tooltip content={<Tip/>}/>
+                    <Legend wrapperStyle={{color:C.textMuted,fontSize:12,paddingTop:8}}/>
+                    <Bar dataKey="net_cost"   name="Net Cost"   fill={C.brand} radius={[6,6,0,0]}/>
+                    <Bar dataKey="gross_cost" name="Gross Cost" fill={C.cyan}  radius={[6,6,0,0]}/>
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+
+              {/* Service pie */}
+              <Card style={{flex:1.2,minWidth:260}}>
+                <SecTitle accent={C.cyan}>Cost by Service</SecTitle>
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie data={dash.SERVICES.slice(0,8)} dataKey="cost" nameKey="service"
+                      cx="50%" cy="45%" outerRadius={95} innerRadius={50} paddingAngle={3}>
+                      {dash.SERVICES.slice(0,8).map((_,i)=><Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
+                    </Pie>
+                    <Tooltip formatter={(v)=>fmt(v)}/>
+                    <Legend wrapperStyle={{color:C.textMuted,fontSize:10}} iconSize={8}/>
+                  </PieChart>
+                </ResponsiveContainer>
+              </Card>
+            </div>
+
+            <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
+              {/* Project horizontal bar */}
+              <Card style={{flex:1.5,minWidth:300}}>
+                <SecTitle accent={C.brand}>Project-wise Total Billing</SecTitle>
+                <ResponsiveContainer width="100%" height={Math.max(180,dash.PROJECTS.length*52)}>
+                  <BarChart data={dash.PROJECTS} layout="vertical" margin={{top:0,right:24,left:0,bottom:0}}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={C.border} horizontal={false}/>
+                    <XAxis type="number" tickFormatter={fmtShort} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
+                    <YAxis dataKey="project" type="category" width={130} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
+                    <Tooltip content={<Tip/>}/>
+                    <Bar dataKey="total" name="Total Cost" radius={[0,6,6,0]}>
+                      {dash.PROJECTS.map((_,i)=><Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+
+              {/* Region progress bars */}
+              <Card style={{flex:1,minWidth:240}}>
+                <SecTitle accent={C.c3}>Top Regions</SecTitle>
+                {dash.REGIONS.slice(0,7).map((r,i)=>{
+                  const pct = dash.totalNet?(r.cost/dash.totalNet*100):0;
+                  return (
+                    <div key={r.region} style={{marginBottom:14}}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                        <span style={{color:C.textSecond,fontSize:12,fontWeight:500,maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.region}</span>
+                        <span style={{color:C.textPrimary,fontSize:12,fontWeight:700,fontFamily:"monospace"}}>{fmtShort(r.cost)}</span>
+                      </div>
+                      <div style={{height:5,background:C.border,borderRadius:3}}>
+                        <div style={{height:"100%",borderRadius:3,background:PIE_COLORS[i%PIE_COLORS.length],width:`${pct.toFixed(1)}%`,transition:"width 0.5s ease"}}/>
+                      </div>
+                    </div>
+                  );
+                })}
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* ════════════ MONTHLY ════════════ */}
+        {activeTab==="monthly" && (
+          <div style={{display:"flex",flexDirection:"column",gap:20}}>
+            <Card>
+              <SecTitle accent={C.brand}>Monthly Billing Comparison</SecTitle>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dash.MONTHLY} barCategoryGap="40%" margin={{top:4,right:8,left:0,bottom:0}}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false}/>
+                  <XAxis dataKey="label" tick={{fill:C.textMuted,fontSize:13}} axisLine={false} tickLine={false}/>
+                  <YAxis tickFormatter={fmtShort} tick={{fill:C.textMuted,fontSize:12}} axisLine={false} tickLine={false}/>
+                  <Tooltip content={<Tip/>}/>
+                  <Legend wrapperStyle={{color:C.textMuted,fontSize:13,paddingTop:8}}/>
+                  <Bar dataKey="net_cost"   name="Net Cost (INR)"   fill={C.brand} radius={[8,8,0,0]}/>
+                  <Bar dataKey="gross_cost" name="Gross Cost (INR)" fill={C.cyan}  radius={[8,8,0,0]}/>
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+
+            <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
+              {dash.MONTHLY.map((m,i)=>(
+                <Card key={m.month} style={{flex:1,minWidth:200}}>
+                  <p style={{color:C.textMuted,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px"}}>{m.label}</p>
+                  <p style={{color:C.textPrimary,fontSize:26,fontWeight:800,margin:"0 0 3px",fontFamily:"monospace",lineHeight:1}}>{fmt(m.net_cost)}</p>
+                  <p style={{color:C.textLight,fontSize:11,margin:"0 0 14px"}}>Gross: {fmt(m.gross_cost)}</p>
+                  <div style={{height:4,background:C.border,borderRadius:2}}>
+                    <div style={{height:"100%",borderRadius:2,background:i%2===0?C.brand:C.cyan,width:`${(m.net_cost/maxMonthly*100).toFixed(0)}%`,transition:"width 0.5s"}}/>
+                  </div>
+                </Card>
+              ))}
+              {dash.momGrowth && (
+                <Card style={{flex:1,minWidth:200,borderTop:`3px solid ${dash.momGrowth.pct>=0?C.c3:C.c5}`}}>
+                  <p style={{color:C.textMuted,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.12em",margin:"0 0 8px"}}>MoM Growth</p>
+                  <p style={{color:dash.momGrowth.pct>=0?C.c3:C.c5,fontSize:28,fontWeight:800,margin:"0 0 4px",fontFamily:"monospace",lineHeight:1}}>
+                    {dash.momGrowth.pct>=0?"+":""}{dash.momGrowth.pct.toFixed(1)}%
+                  </p>
+                  <p style={{color:C.textMuted,fontSize:11,margin:0}}>{dash.momGrowth.from.split(" ")[0]} → {dash.momGrowth.to}</p>
+                </Card>
+              )}
+            </div>
+
+            {/* Monthly project table */}
+            <Card>
+              <SecTitle accent={C.cyan}>Monthly Project Breakdown</SecTitle>
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+                  <thead>
+                    <tr style={{background:C.bgSection}}>
+                      <th style={{color:C.textMuted,textAlign:"left",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap",borderRadius:"8px 0 0 0"}}>Project</th>
+                      {dash.MONTHS.map(m=>(
+                        <th key={m.key} style={{color:C.textMuted,textAlign:"right",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap"}}>{m.label}</th>
+                      ))}
+                      <th style={{color:C.brand,textAlign:"right",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap"}}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dash.PROJECTS.map((p,i)=>(
+                      <tr key={p.project} style={{background:i%2?C.bgSection:C.bgCard,transition:"background 0.15s"}}>
+                        <td style={{padding:"10px 14px",color:C.textPrimary,fontWeight:600,borderBottom:`1px solid ${C.border}`}}>{p.project}</td>
+                        {dash.MONTHS.map(m=>(
+                          <td key={m.key} style={{padding:"10px 14px",color:C.textMuted,fontFamily:"monospace",textAlign:"right",borderBottom:`1px solid ${C.border}`}}>
+                            {p[m.key]>0?fmt(p[m.key]):"—"}
+                          </td>
+                        ))}
+                        <td style={{padding:"10px 14px",color:C.brand,fontFamily:"monospace",fontWeight:700,textAlign:"right",borderBottom:`1px solid ${C.border}`}}>{fmt(p.total)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ════════════ DAILY ════════════ */}
+        {activeTab==="daily" && (
+          <div style={{display:"flex",flexDirection:"column",gap:20}}>
+            <Card>
+              <SecTitle accent={C.brand}>Daily Cost Trend</SecTitle>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={dash.DAILY} margin={{top:4,right:8,left:0,bottom:0}}>
+                  <defs>
+                    <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor={C.brand} stopOpacity={0.18}/>
+                      <stop offset="95%" stopColor={C.brand} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false}/>
+                  <XAxis dataKey="day" tick={{fill:C.textMuted,fontSize:10}} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={40}/>
+                  <YAxis tickFormatter={fmtShort} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
+                  <Tooltip content={<Tip/>}/>
+                  <Area type="monotone" dataKey="cost" name="Daily Cost"
+                    stroke={C.brand} fill="url(#areaGrad)" strokeWidth={2.5}
+                    dot={{r:3,fill:C.brand,strokeWidth:0}} activeDot={{r:5,fill:C.cyan}}/>
+                </AreaChart>
+              </ResponsiveContainer>
+            </Card>
+
+            <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
+              <Card style={{flex:2,minWidth:300}}>
+                <SecTitle accent={C.cyan}>Daily Cost Breakdown</SecTitle>
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={dash.DAILY} margin={{top:4,right:8,left:0,bottom:0}}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false}/>
+                    <XAxis dataKey="day" tick={{fill:C.textMuted,fontSize:9}} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={40}/>
+                    <YAxis tickFormatter={fmtShort} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
+                    <Tooltip content={<Tip/>}/>
+                    <Bar dataKey="cost" name="Cost" radius={[3,3,0,0]}>
+                      {dash.DAILY.map((d,i)=>(
+                        <Cell key={i} fill={d.cost>5000?C.c5:d.cost>2000?C.c4:d.cost>1000?C.cyan:C.brand}/>
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div style={{display:"flex",gap:14,marginTop:12,flexWrap:"wrap"}}>
+                  {[["≤₹1K",C.brand],["₹1K–2K",C.cyan],["₹2K–5K",C.c4],[">₹5K",C.c5]].map(([l,c])=>(
+                    <div key={l} style={{display:"flex",alignItems:"center",gap:6,fontSize:11,color:C.textMuted}}>
+                      <div style={{width:10,height:10,borderRadius:2,background:c}}/>
+                      {l}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              <Card style={{flex:1,minWidth:220}}>
+                <SecTitle accent={C.c3}>Daily Stats</SecTitle>
+                {[
+                  {label:"Peak Day",       v:dash.peakDay.day,       sub:fmt(dash.peakDay.cost),  accent:C.c4},
+                  {label:"Avg Daily",      v:fmtShort(dash.avgDaily),sub:`${dash.DAILY.length} active days`, accent:C.brand},
+                  {label:"Lowest Day",     v:dash.lowDay.day,        sub:fmt(dash.lowDay.cost),   accent:C.c3},
+                  {label:"High Days >₹3K", v:`${dash.highDays} days`,sub:"Anomaly spend days",    accent:C.c5},
+                ].map(s=>(
+                  <div key={s.label} style={{padding:"13px 0",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div>
+                      <p style={{color:C.textLight,fontSize:10,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em"}}>{s.label}</p>
+                      <p style={{color:C.textPrimary,fontSize:16,fontWeight:700,margin:0,fontFamily:"monospace"}}>{s.v}</p>
+                      <p style={{color:C.textMuted,fontSize:11,margin:0}}>{s.sub}</p>
+                    </div>
+                    <div style={{width:4,height:36,borderRadius:2,background:s.accent}}/>
+                  </div>
+                ))}
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* ════════════ PROJECTS ════════════ */}
+        {activeTab==="projects" && (
+          <div style={{display:"flex",flexDirection:"column",gap:20}}>
+            <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
+              <Card style={{flex:2,minWidth:320}}>
+                <SecTitle accent={C.brand}>Project Billing by Month</SecTitle>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={dash.PROJECTS} margin={{top:4,right:8,left:0,bottom:0}}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false}/>
+                    <XAxis dataKey="project" tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
+                    <YAxis tickFormatter={fmtShort} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
+                    <Tooltip content={<Tip/>}/>
+                    <Legend wrapperStyle={{color:C.textMuted,fontSize:12,paddingTop:8}}/>
+                    {dash.MONTHS.map((m,i)=>(
+                      <Bar key={m.key} dataKey={m.key} name={m.label}
+                        fill={i===0?C.brand:i===1?C.cyan:PIE_COLORS[i]} radius={[4,4,0,0]}/>
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+
+              <Card style={{flex:1,minWidth:240}}>
+                <SecTitle accent={C.cyan}>Project Share</SecTitle>
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <Pie data={dash.PROJECTS} dataKey="total" nameKey="project"
+                      cx="50%" cy="45%" outerRadius={100} innerRadius={55} paddingAngle={4}>
+                      {dash.PROJECTS.map((_,i)=><Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
+                    </Pie>
+                    <Tooltip formatter={(v)=>fmt(v)}/>
+                    <Legend wrapperStyle={{color:C.textMuted,fontSize:11}} iconSize={9}/>
+                  </PieChart>
+                </ResponsiveContainer>
+              </Card>
+            </div>
+
+            <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
+              {dash.PROJECTS.map((p,i)=>(
+                <Card key={p.project} style={{flex:1,minWidth:180,borderTop:`3px solid ${PIE_COLORS[i%PIE_COLORS.length]}`}}>
+                  <p style={{color:PIE_COLORS[i%PIE_COLORS.length],fontSize:10,fontWeight:700,textTransform:"uppercase",margin:"0 0 6px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",letterSpacing:"0.08em"}}>{p.project}</p>
+                  <p style={{color:C.textPrimary,fontSize:22,fontWeight:800,fontFamily:"monospace",margin:"0 0 10px",lineHeight:1}}>{fmtShort(p.total)}</p>
+                  <div style={{fontSize:12,color:C.textMuted,display:"flex",flexDirection:"column",gap:3}}>
+                    {dash.MONTHS.map(m=>(
+                      <span key={m.key}>{m.label.split(" ")[0]}: {p[m.key]>0?fmtShort(p[m.key]):"—"}</span>
+                    ))}
+                    <span style={{
+                      color:C.brand,fontWeight:700,marginTop:6,fontSize:12,
+                      padding:"3px 8px",background:C.brandLight,borderRadius:6,alignSelf:"flex-start"
+                    }}>
+                      {dash.totalNet?(p.total/dash.totalNet*100).toFixed(1):0}% share
+                    </span>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ════════════ SERVICES ════════════ */}
+        {activeTab==="services" && (
+          <div style={{display:"flex",flexDirection:"column",gap:20}}>
+            <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
+              <Card style={{flex:2,minWidth:320}}>
+                <SecTitle accent={C.brand}>Cost by Service</SecTitle>
+                <ResponsiveContainer width="100%" height={Math.max(280,dash.SERVICES.length*36)}>
+                  <BarChart data={dash.SERVICES.filter(s=>s.cost>0)} layout="vertical" margin={{top:0,right:24,left:0,bottom:0}}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={C.border} horizontal={false}/>
+                    <XAxis type="number" tickFormatter={fmtShort} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
+                    <YAxis dataKey="service" type="category" width={190} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
+                    <Tooltip content={<Tip/>}/>
+                    <Bar dataKey="cost" name="Net Cost" radius={[0,5,5,0]}>
+                      {dash.SERVICES.filter(s=>s.cost>0).map((_,i)=><Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+
+              <Card style={{flex:1,minWidth:240}}>
+                <SecTitle accent={C.cyan}>Service Distribution</SecTitle>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie data={dash.SERVICES.slice(0,8)} dataKey="cost" nameKey="service"
+                      cx="50%" cy="45%" outerRadius={98} paddingAngle={2}>
+                      {dash.SERVICES.slice(0,8).map((_,i)=><Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
+                    </Pie>
+                    <Tooltip formatter={(v)=>fmt(v)}/>
+                    <Legend wrapperStyle={{color:C.textMuted,fontSize:10}} iconSize={8}/>
+                  </PieChart>
+                </ResponsiveContainer>
+              </Card>
+            </div>
+
+            <Card>
+              <SecTitle accent={C.cyan}>Service Cost Breakdown</SecTitle>
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+                  <thead>
+                    <tr style={{background:C.bgSection}}>
+                      {["#","Service","Net Cost","Share","Distribution"].map(h=>(
+                        <th key={h} style={{color:C.textMuted,textAlign:"left",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap"}}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dash.SERVICES.filter(s=>s.cost>0).map((s,i)=>(
+                      <tr key={s.service} style={{background:i%2?C.bgSection:C.bgCard}}>
+                        <td style={{padding:"10px 14px",color:C.textLight,fontSize:11,borderBottom:`1px solid ${C.border}`}}>{i+1}</td>
+                        <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`}}>
+                          <div style={{display:"flex",alignItems:"center",gap:8}}>
+                            <div style={{width:9,height:9,borderRadius:2,flexShrink:0,background:PIE_COLORS[i%PIE_COLORS.length]}}/>
+                            <span style={{color:C.textPrimary,fontWeight:600}}>{s.service}</span>
+                          </div>
+                        </td>
+                        <td style={{padding:"10px 14px",color:C.textPrimary,fontFamily:"monospace",fontWeight:700,whiteSpace:"nowrap",borderBottom:`1px solid ${C.border}`}}>{fmt(s.cost)}</td>
+                        <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`}}>
+                          <span style={{
+                            background:C.brandLight,color:C.brand,
+                            padding:"2px 8px",borderRadius:6,fontSize:11,fontWeight:700,fontFamily:"monospace"
+                          }}>{s.pct}%</span>
+                        </td>
+                        <td style={{padding:"10px 14px",minWidth:140,borderBottom:`1px solid ${C.border}`}}>
+                          <div style={{height:5,background:C.border,borderRadius:3}}>
+                            <div style={{height:"100%",borderRadius:3,background:PIE_COLORS[i%PIE_COLORS.length],width:`${s.pct}%`}}/>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ── FOOTER ── */}
+        <div style={{
+          marginTop:36,padding:"14px 0",
+          borderTop:`1px solid ${C.border}`,
+          display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:8,
+        }}>
+          <span style={{color:C.textLight,fontSize:11}}>GWC-POC Billing Dashboard · {dash.dateRange}</span>
+          <span style={{color:C.textLight,fontSize:11}}>Total Net Cost: {fmt(dash.totalNet)} · INR</span>
+        </div>
+      </div>
+    </div>
+  );
+}
