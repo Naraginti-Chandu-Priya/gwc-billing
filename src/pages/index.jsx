@@ -200,8 +200,10 @@ export default function BillingDashboard() {
       mMap[mKey].net_cost  += net;
       mMap[mKey].gross_cost += gross;
 
-      if (!dMap[dKey]) dMap[dKey]={day:dLabel,date:dKey,cost:0,_d:d};
+      if (!dMap[dKey]) dMap[dKey]={day:dLabel,date:dKey,cost:0,_d:d, projects:{}, services:{}};
       dMap[dKey].cost += net;
+      dMap[dKey].projects[proj] = (dMap[dKey].projects[proj] || 0) + net;
+      dMap[dKey].services[svc]  = (dMap[dKey].services[svc] || 0) + net;
 
       if (!pMap[proj]) pMap[proj]={project:proj,total:0};
       pMap[proj].total += net;
@@ -227,6 +229,22 @@ export default function BillingDashboard() {
       .filter(r => r.region && r.region !== "Unknown")
       .sort((a,b)=>b.cost-a.cost);
 
+    let latestDayLabel = "-";
+    let latestDayProjects = [];
+    let latestDayServices = [];
+    if (DAILY.length) {
+      const last = DAILY[DAILY.length - 1];
+      latestDayLabel = last.day;
+      latestDayProjects = Object.entries(last.projects)
+         .map(([project, cost]) => ({project, cost}))
+         .filter(p => p.project !== "Unknown" && p.project !== "undefined" && p.project !== "")
+         .sort((a,b) => b.cost - a.cost);
+      latestDayServices = Object.entries(last.services)
+         .map(([service, cost]) => ({service, cost}))
+         .filter(s => s.service !== "Unknown" && s.service !== "undefined" && s.service !== "")
+         .sort((a,b) => b.cost - a.cost);
+    }
+
     const peakDay  = DAILY.reduce((mx,d)=>d.cost>mx.cost?d:mx,DAILY[0]||{day:"-",date:"-",cost:0});
     const lowDay   = DAILY.reduce((mn,d)=>d.cost<mn.cost?d:mn,DAILY[0]||{day:"-",cost:0});
     const avgDaily = DAILY.length?(tNet/DAILY.length):0;
@@ -250,6 +268,7 @@ export default function BillingDashboard() {
       topProject:PROJECTS[0]?.project||"-",
       topService:SERVICES[0]?.service||"-",
       dateRange,peakDay,lowDay,avgDaily,highDays,momGrowth,
+      latestDayLabel,latestDayProjects,latestDayServices,
     };
   },[rawData]);
 
@@ -530,48 +549,54 @@ export default function BillingDashboard() {
             </Card>
 
             <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
-              <Card style={{flex:2,minWidth:300}}>
-                <SecTitle accent={C.cyan}>Daily Cost Breakdown</SecTitle>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={dash.DAILY} margin={{top:4,right:8,left:0,bottom:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false}/>
-                    <XAxis dataKey="day" tick={{fill:C.textMuted,fontSize:9}} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={40}/>
-                    <YAxis tickFormatter={fmtShort} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
-                    <Tooltip content={<Tip/>}/>
-                    <Bar dataKey="cost" name="Cost" radius={[3,3,0,0]}>
-                      {dash.DAILY.map((d,i)=>(
-                        <Cell key={i} fill={d.cost>5000?C.c5:d.cost>2000?C.c4:d.cost>1000?C.cyan:C.brand}/>
+              <Card style={{flex:1,minWidth:260,display:"flex",flexDirection:"column"}}>
+                <SecTitle accent={C.cyan}>Active Projects ({dash.latestDayLabel})</SecTitle>
+                <div style={{overflowY:"auto",flex:1,maxHeight:260}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                    <thead>
+                      <tr style={{background:C.bgSection}}>
+                        <th style={{color:C.textMuted,textAlign:"left",padding:"8px 10px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:9,textTransform:"uppercase",letterSpacing:"0.05em"}}>Project</th>
+                        <th style={{color:C.textMuted,textAlign:"right",padding:"8px 10px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:9,textTransform:"uppercase",letterSpacing:"0.05em"}}>Cost</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dash.latestDayProjects.map((p,i)=>(
+                        <tr key={p.project} style={{background:i%2?C.bgSection:C.bgCard}}>
+                          <td style={{padding:"8px 10px",color:C.textPrimary,fontWeight:600,borderBottom:`1px solid ${C.border}`}}>{p.project}</td>
+                          <td style={{padding:"8px 10px",color:C.textPrimary,fontFamily:"monospace",fontWeight:700,textAlign:"right",borderBottom:`1px solid ${C.border}`}}>{fmtShort(p.cost)}</td>
+                        </tr>
                       ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-                <div style={{display:"flex",gap:14,marginTop:12,flexWrap:"wrap"}}>
-                  {[["≤₹1K",C.brand],["₹1K–2K",C.cyan],["₹2K–5K",C.c4],[">₹5K",C.c5]].map(([l,c])=>(
-                    <div key={l} style={{display:"flex",alignItems:"center",gap:6,fontSize:11,color:C.textMuted}}>
-                      <div style={{width:10,height:10,borderRadius:2,background:c}}/>
-                      {l}
-                    </div>
-                  ))}
+                      {dash.latestDayProjects.length === 0 && (
+                        <tr><td colSpan="2" style={{padding:"20px",textAlign:"center",color:C.textMuted}}>No project data for this day.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </Card>
 
-              <Card style={{flex:1,minWidth:220}}>
-                <SecTitle accent={C.c3}>Daily Stats</SecTitle>
-                {[
-                  {label:"Peak Day",       v:dash.peakDay.day,       sub:fmt(dash.peakDay.cost),  accent:C.c4},
-                  {label:"Avg Daily",      v:fmtShort(dash.avgDaily),sub:`${dash.DAILY.length} active days`, accent:C.brand},
-                  {label:"Lowest Day",     v:dash.lowDay.day,        sub:fmt(dash.lowDay.cost),   accent:C.c3},
-                  {label:"High Days >₹3K", v:`${dash.highDays} days`,sub:"Anomaly spend days",    accent:C.c5},
-                ].map(s=>(
-                  <div key={s.label} style={{padding:"13px 0",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <div>
-                      <p style={{color:C.textLight,fontSize:10,margin:"0 0 2px",textTransform:"uppercase",letterSpacing:"0.08em"}}>{s.label}</p>
-                      <p style={{color:C.textPrimary,fontSize:16,fontWeight:700,margin:0,fontFamily:"monospace"}}>{s.v}</p>
-                      <p style={{color:C.textMuted,fontSize:11,margin:0}}>{s.sub}</p>
-                    </div>
-                    <div style={{width:4,height:36,borderRadius:2,background:s.accent}}/>
-                  </div>
-                ))}
+              <Card style={{flex:1,minWidth:260,display:"flex",flexDirection:"column"}}>
+                <SecTitle accent={C.c3}>Services Used ({dash.latestDayLabel})</SecTitle>
+                <div style={{overflowY:"auto",flex:1,maxHeight:260}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                    <thead>
+                      <tr style={{background:C.bgSection}}>
+                        <th style={{color:C.textMuted,textAlign:"left",padding:"8px 10px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:9,textTransform:"uppercase",letterSpacing:"0.05em"}}>Service</th>
+                        <th style={{color:C.textMuted,textAlign:"right",padding:"8px 10px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:9,textTransform:"uppercase",letterSpacing:"0.05em"}}>Cost</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dash.latestDayServices.map((s,i)=>(
+                        <tr key={s.service} style={{background:i%2?C.bgSection:C.bgCard}}>
+                          <td style={{padding:"8px 10px",color:C.textPrimary,fontWeight:600,borderBottom:`1px solid ${C.border}`}}>{s.service}</td>
+                          <td style={{padding:"8px 10px",color:C.textPrimary,fontFamily:"monospace",fontWeight:700,textAlign:"right",borderBottom:`1px solid ${C.border}`}}>{fmtShort(s.cost)}</td>
+                        </tr>
+                      ))}
+                      {dash.latestDayServices.length === 0 && (
+                        <tr><td colSpan="2" style={{padding:"20px",textAlign:"center",color:C.textMuted}}>No service data for this day.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </Card>
             </div>
           </div>
