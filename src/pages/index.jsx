@@ -582,36 +582,7 @@ export default function BillingDashboard() {
         {/* ════════════ SERVICES ════════════ */}
         {activeTab==="services" && (
           <div style={{display:"flex",flexDirection:"column",gap:20}}>
-            <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
-              <Card style={{flex:2,minWidth:320}}>
-                <SecTitle accent={C.brand}>Cost by Service</SecTitle>
-                <ResponsiveContainer width="100%" height={Math.max(280,dash.SERVICES.length*36)}>
-                  <BarChart data={dash.SERVICES.filter(s=>s.cost>0)} layout="vertical" margin={{top:0,right:24,left:0,bottom:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={C.border} horizontal={false}/>
-                    <XAxis type="number" tickFormatter={fmtShort} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
-                    <YAxis dataKey="service" type="category" width={190} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
-                    <Tooltip content={<Tip/>}/>
-                    <Bar dataKey="cost" name="Net Cost" radius={[0,5,5,0]}>
-                      {dash.SERVICES.filter(s=>s.cost>0).map((_,i)=><Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
 
-              <Card style={{flex:1,minWidth:240}}>
-                <SecTitle accent={C.cyan}>Service Distribution</SecTitle>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie data={dash.SERVICES.slice(0,8)} dataKey="cost" nameKey="service"
-                      cx="50%" cy="45%" outerRadius={98} paddingAngle={2}>
-                      {dash.SERVICES.slice(0,8).map((_,i)=><Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
-                    </Pie>
-                    <Tooltip formatter={(v)=>fmt(v)}/>
-                    <Legend wrapperStyle={{color:C.textMuted,fontSize:10}} iconSize={8}/>
-                  </PieChart>
-                </ResponsiveContainer>
-              </Card>
-            </div>
 
             <Card>
               <SecTitle accent={C.cyan}>Service Cost Breakdown</SecTitle>
@@ -619,7 +590,7 @@ export default function BillingDashboard() {
                 <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
                   <thead>
                     <tr style={{background:C.bgSection}}>
-                      {["#","Service","Net Cost","Share","Distribution"].map(h=>(
+                      {["#","Service","Net Cost"].map(h=>(
                         <th key={h} style={{color:C.textMuted,textAlign:"left",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap"}}>{h}</th>
                       ))}
                     </tr>
@@ -635,17 +606,7 @@ export default function BillingDashboard() {
                           </div>
                         </td>
                         <td style={{padding:"10px 14px",color:C.textPrimary,fontFamily:"monospace",fontWeight:700,whiteSpace:"nowrap",borderBottom:`1px solid ${C.border}`}}>{fmt(s.cost)}</td>
-                        <td style={{padding:"10px 14px",borderBottom:`1px solid ${C.border}`}}>
-                          <span style={{
-                            background:C.brandLight,color:C.brand,
-                            padding:"2px 8px",borderRadius:6,fontSize:11,fontWeight:700,fontFamily:"monospace"
-                          }}>{s.pct}%</span>
-                        </td>
-                        <td style={{padding:"10px 14px",minWidth:140,borderBottom:`1px solid ${C.border}`}}>
-                          <div style={{height:5,background:C.border,borderRadius:3}}>
-                            <div style={{height:"100%",borderRadius:3,background:PIE_COLORS[i%PIE_COLORS.length],width:`${s.pct}%`}}/>
-                          </div>
-                        </td>
+
                       </tr>
                     ))}
                   </tbody>
