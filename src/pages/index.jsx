@@ -217,11 +217,15 @@ export default function BillingDashboard() {
     const MONTHLY  = Object.values(mMap).sort((a,b)=>a.month.localeCompare(b.month));
     const MONTHS   = MONTHLY.map(m=>({key:m.month,label:m.label}));
     const DAILY    = Object.values(dMap).sort((a,b)=>a._d-b._d);
-    const PROJECTS = Object.values(pMap).sort((a,b)=>b.total-a.total);
+    const PROJECTS = Object.values(pMap)
+      .filter(p => p.project && p.project !== "Unknown")
+      .sort((a,b)=>b.total-a.total);
     const SERVICES = Object.values(sMap)
       .sort((a,b)=>b.cost-a.cost)
       .map(s=>({...s,pct:tNet?(s.cost/tNet*100).toFixed(1):0}));
-    const REGIONS  = Object.values(rMap).sort((a,b)=>b.cost-a.cost);
+    const REGIONS  = Object.values(rMap)
+      .filter(r => r.region && r.region !== "Unknown")
+      .sort((a,b)=>b.cost-a.cost);
 
     const peakDay  = DAILY.reduce((mx,d)=>d.cost>mx.cost?d:mx,DAILY[0]||{day:"-",date:"-",cost:0});
     const lowDay   = DAILY.reduce((mn,d)=>d.cost<mn.cost?d:mn,DAILY[0]||{day:"-",cost:0});
@@ -241,8 +245,8 @@ export default function BillingDashboard() {
     return {
       MONTHLY,DAILY,PROJECTS,SERVICES,REGIONS,MONTHS,
       totalNet:tNet,totalGross:tGross,
-      nProjects:Object.keys(pMap).length,
-      nServices:Object.keys(sMap).length,
+      nProjects:PROJECTS.length,
+      nServices:SERVICES.length,
       topProject:PROJECTS[0]?.project||"-",
       topService:SERVICES[0]?.service||"-",
       dateRange,peakDay,lowDay,avgDaily,highDays,momGrowth,
@@ -330,7 +334,6 @@ export default function BillingDashboard() {
             <KPI label="Gross Cost"        value={fmtShort(dash.totalGross)}   sub="Before credits"            accent={C.cyan}    icon="📊"/>
             <KPI label="Active Projects"   value={dash.nProjects}              sub={`Top: ${dash.topProject}`} accent={C.c3}      icon="🗂️"/>
             <KPI label="Services Used"     value={dash.nServices}              sub={`Top: ${dash.topService}`} accent={C.c6}      icon="⚙️"/>
-            <KPI label="Peak Day"          value={fmtShort(dash.peakDay.cost)} sub={dash.peakDay.date}         accent={C.c4}      icon="📈"/>
           </div>
         )}
 
@@ -354,19 +357,39 @@ export default function BillingDashboard() {
                 </ResponsiveContainer>
               </Card>
 
-              {/* Service pie */}
-              <Card style={{flex:1.2,minWidth:260}}>
+              {/* Service table */}
+              <Card style={{flex:1.2,minWidth:260,display:"flex",flexDirection:"column"}}>
                 <SecTitle accent={C.cyan}>Cost by Service</SecTitle>
-                <ResponsiveContainer width="100%" height={260}>
-                  <PieChart>
-                    <Pie data={dash.SERVICES.slice(0,8)} dataKey="cost" nameKey="service"
-                      cx="50%" cy="45%" outerRadius={95} innerRadius={50} paddingAngle={3}>
-                      {dash.SERVICES.slice(0,8).map((_,i)=><Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
-                    </Pie>
-                    <Tooltip formatter={(v)=>fmt(v)}/>
-                    <Legend wrapperStyle={{color:C.textMuted,fontSize:10}} iconSize={8}/>
-                  </PieChart>
-                </ResponsiveContainer>
+                <div style={{overflowY:"auto",flex:1,maxHeight:260}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                    <thead>
+                      <tr style={{background:C.bgSection}}>
+                        <th style={{color:C.textMuted,textAlign:"left",padding:"8px 10px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:9,textTransform:"uppercase",letterSpacing:"0.05em"}}>Service</th>
+                        <th style={{color:C.textMuted,textAlign:"right",padding:"8px 10px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:9,textTransform:"uppercase",letterSpacing:"0.05em"}}>Cost</th>
+                        <th style={{color:C.textMuted,textAlign:"right",padding:"8px 10px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:9,textTransform:"uppercase",letterSpacing:"0.05em"}}>Share</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dash.SERVICES.slice(0,8).map((s,i)=>(
+                        <tr key={s.service} style={{background:i%2?C.bgSection:C.bgCard}}>
+                          <td style={{padding:"8px 10px",borderBottom:`1px solid ${C.border}`}}>
+                            <div style={{display:"flex",alignItems:"center",gap:6}}>
+                              <div style={{width:8,height:8,borderRadius:2,flexShrink:0,background:PIE_COLORS[i%PIE_COLORS.length]}}/>
+                              <span style={{color:C.textPrimary,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:120}} title={s.service}>{s.service}</span>
+                            </div>
+                          </td>
+                          <td style={{padding:"8px 10px",color:C.textPrimary,fontFamily:"monospace",fontWeight:700,textAlign:"right",whiteSpace:"nowrap",borderBottom:`1px solid ${C.border}`}}>{fmtShort(s.cost)}</td>
+                          <td style={{padding:"8px 10px",textAlign:"right",borderBottom:`1px solid ${C.border}`}}>
+                            <span style={{
+                              background:C.brandLight,color:C.brand,
+                              padding:"2px 6px",borderRadius:4,fontSize:10,fontWeight:700,fontFamily:"monospace"
+                            }}>{s.pct}%</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </Card>
             </div>
 
