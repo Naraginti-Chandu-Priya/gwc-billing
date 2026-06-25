@@ -324,13 +324,15 @@ export default function BillingDashboard() {
       <div style={{padding:"24px 32px"}}>
 
         {/* ── KPI STRIP ── */}
-        <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:28}}>
-          <KPI label="Total Net Cost"    value={fmtShort(dash.totalNet)}     sub={dash.dateRange}            accent={C.brand}   icon="💰"/>
-          <KPI label="Gross Cost"        value={fmtShort(dash.totalGross)}   sub="Before credits"            accent={C.cyan}    icon="📊"/>
-          <KPI label="Active Projects"   value={dash.nProjects}              sub={`Top: ${dash.topProject}`} accent={C.c3}      icon="🗂️"/>
-          <KPI label="Services Used"     value={dash.nServices}              sub={`Top: ${dash.topService}`} accent={C.c6}      icon="⚙️"/>
-          <KPI label="Peak Day"          value={fmtShort(dash.peakDay.cost)} sub={dash.peakDay.date}         accent={C.c4}      icon="📈"/>
-        </div>
+        {activeTab === "overview" && (
+          <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:28}}>
+            <KPI label="Total Net Cost"    value={fmtShort(dash.totalNet)}     sub={dash.dateRange}            accent={C.brand}   icon="💰"/>
+            <KPI label="Gross Cost"        value={fmtShort(dash.totalGross)}   sub="Before credits"            accent={C.cyan}    icon="📊"/>
+            <KPI label="Active Projects"   value={dash.nProjects}              sub={`Top: ${dash.topProject}`} accent={C.c3}      icon="🗂️"/>
+            <KPI label="Services Used"     value={dash.nServices}              sub={`Top: ${dash.topService}`} accent={C.c6}      icon="⚙️"/>
+            <KPI label="Peak Day"          value={fmtShort(dash.peakDay.cost)} sub={dash.peakDay.date}         accent={C.c4}      icon="📈"/>
+          </div>
+        )}
 
         {/* ════════════ OVERVIEW ════════════ */}
         {activeTab==="overview" && (
@@ -597,12 +599,7 @@ export default function BillingDashboard() {
                     {dash.MONTHS.map(m=>(
                       <span key={m.key}>{m.label.split(" ")[0]}: {p[m.key]>0?fmtShort(p[m.key]):"—"}</span>
                     ))}
-                    <span style={{
-                      color:C.brand,fontWeight:700,marginTop:6,fontSize:12,
-                      padding:"3px 8px",background:C.brandLight,borderRadius:6,alignSelf:"flex-start"
-                    }}>
-                      {dash.totalNet?(p.total/dash.totalNet*100).toFixed(1):0}% share
-                    </span>
+                    
                   </div>
                 </Card>
               ))}
