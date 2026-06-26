@@ -139,13 +139,13 @@ export default function BillingDashboard() {
 
   useEffect(() => {
     const load = async () => {
-      const aliases = ["billing","GWC-POC_Billing","dataAlias","data"];
-      for (const alias of aliases) {
+      const alias = "billing";
+      
         try {
           const d = await domo.get(`/data/v1/${alias}?limit=50000`);
           if (d && d.length) { setRawData(d); setLoading(false); return; }
         } catch(_) {}
-      }
+      
       setError("Could not load data. Check manifest.json alias.");
       setLoading(false);
     };
@@ -385,7 +385,6 @@ export default function BillingDashboard() {
                       <tr style={{background:C.bgSection}}>
                         <th style={{color:C.textMuted,textAlign:"left",padding:"8px 10px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:9,textTransform:"uppercase",letterSpacing:"0.05em"}}>Service</th>
                         <th style={{color:C.textMuted,textAlign:"right",padding:"8px 10px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:9,textTransform:"uppercase",letterSpacing:"0.05em"}}>Cost</th>
-                        <th style={{color:C.textMuted,textAlign:"right",padding:"8px 10px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:9,textTransform:"uppercase",letterSpacing:"0.05em"}}>Share</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -398,12 +397,6 @@ export default function BillingDashboard() {
                             </div>
                           </td>
                           <td style={{padding:"8px 10px",color:C.textPrimary,fontFamily:"monospace",fontWeight:700,textAlign:"right",whiteSpace:"nowrap",borderBottom:`1px solid ${C.border}`}}>{fmtShort(s.cost)}</td>
-                          <td style={{padding:"8px 10px",textAlign:"right",borderBottom:`1px solid ${C.border}`}}>
-                            <span style={{
-                              background:C.brandLight,color:C.brand,
-                              padding:"2px 6px",borderRadius:4,fontSize:10,fontWeight:700,fontFamily:"monospace"
-                            }}>{s.pct}%</span>
-                          </td>
                         </tr>
                       ))}
                     </tbody>
