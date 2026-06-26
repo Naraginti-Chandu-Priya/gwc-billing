@@ -3,7 +3,7 @@ import domo from "ryuu.js";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  AreaChart, Area
+  AreaChart, Area, LabelList
 } from "recharts";
 
 // ── PALETTE (Light elegant theme) ─────────────────────────────────────────────
@@ -410,13 +410,13 @@ export default function BillingDashboard() {
               <Card style={{flex:1.5,minWidth:300}}>
                 <SecTitle accent={C.brand}>Project-wise Total Billing</SecTitle>
                 <ResponsiveContainer width="100%" height={Math.max(180,dash.PROJECTS.length*52)}>
-                  <BarChart data={dash.PROJECTS} layout="vertical" margin={{top:0,right:24,left:0,bottom:0}}>
+                  <BarChart data={dash.PROJECTS} layout="vertical" margin={{top:0,right:50,left:0,bottom:0}}>
                     <CartesianGrid strokeDasharray="3 3" stroke={C.border} horizontal={false}/>
                     <XAxis type="number" tickFormatter={fmtShort} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
                     <YAxis dataKey="project" type="category" width={130} tick={{fill:C.textMuted,fontSize:11}} axisLine={false} tickLine={false}/>
-                    <Tooltip content={<Tip/>}/>
                     <Bar dataKey="total" name="Total Cost" radius={[0,6,6,0]}>
                       {dash.PROJECTS.map((_,i)=><Cell key={i} fill={PIE_COLORS[i%PIE_COLORS.length]}/>)}
+                      <LabelList dataKey="total" position="right" formatter={fmtShort} fill={C.textPrimary} fontSize={11} fontWeight={600} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -491,24 +491,41 @@ export default function BillingDashboard() {
                   <thead>
                     <tr style={{background:C.bgSection}}>
                       <th style={{color:C.textMuted,textAlign:"left",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap",borderRadius:"8px 0 0 0"}}>Project</th>
-                      {dash.MONTHS.map(m=>(
+                      {dash.MONTHS.slice(-2).map(m=>(
                         <th key={m.key} style={{color:C.textMuted,textAlign:"right",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap"}}>{m.label}</th>
                       ))}
-                      <th style={{color:C.brand,textAlign:"right",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap"}}>Total</th>
+                      <th style={{color:C.brand,textAlign:"right",padding:"10px 14px",borderBottom:`1px solid ${C.border}`,fontWeight:700,fontSize:10,textTransform:"uppercase",letterSpacing:"0.08em",whiteSpace:"nowrap"}}>Change (%)</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {dash.PROJECTS.map((p,i)=>(
-                      <tr key={p.project} style={{background:i%2?C.bgSection:C.bgCard,transition:"background 0.15s"}}>
-                        <td style={{padding:"10px 14px",color:C.textPrimary,fontWeight:600,borderBottom:`1px solid ${C.border}`}}>{p.project}</td>
-                        {dash.MONTHS.map(m=>(
-                          <td key={m.key} style={{padding:"10px 14px",color:C.textMuted,fontFamily:"monospace",textAlign:"right",borderBottom:`1px solid ${C.border}`}}>
-                            {p[m.key]>0?fmt(p[m.key]):"—"}
-                          </td>
-                        ))}
-                        <td style={{padding:"10px 14px",color:C.brand,fontFamily:"monospace",fontWeight:700,textAlign:"right",borderBottom:`1px solid ${C.border}`}}>{fmt(p.total)}</td>
-                      </tr>
-                    ))}
+                    {dash.PROJECTS.map((p,i)=>{
+                      const recentMonths = dash.MONTHS.slice(-2);
+                      let growthStr = "—";
+                      let color = C.textMuted;
+                      if (recentMonths.length === 2) {
+                        const prev = p[recentMonths[0].key] || 0;
+                        const curr = p[recentMonths[1].key] || 0;
+                        if (prev > 0) {
+                          const pct = ((curr - prev) / prev) * 100;
+                          growthStr = `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;
+                          color = pct >= 0 ? C.c3 : C.c5;
+                        } else if (curr > 0) {
+                          growthStr = "+100.0%";
+                          color = C.c3;
+                        }
+                      }
+                      return (
+                        <tr key={p.project} style={{background:i%2?C.bgSection:C.bgCard,transition:"background 0.15s"}}>
+                          <td style={{padding:"10px 14px",color:C.textPrimary,fontWeight:600,borderBottom:`1px solid ${C.border}`}}>{p.project}</td>
+                          {recentMonths.map(m=>(
+                            <td key={m.key} style={{padding:"10px 14px",color:C.textMuted,fontFamily:"monospace",textAlign:"right",borderBottom:`1px solid ${C.border}`}}>
+                              {p[m.key]>0?fmt(p[m.key]):"—"}
+                            </td>
+                          ))}
+                          <td style={{padding:"10px 14px",color,fontFamily:"monospace",fontWeight:700,textAlign:"right",borderBottom:`1px solid ${C.border}`}}>{growthStr}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
